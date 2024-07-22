@@ -4,37 +4,56 @@ using UnityEngine;
 
 public class SurfaceController : MonoBehaviour
 {
-    public float rotationSpeed = 1.0f;
-    public float maxRotationSpeed = 5.0f;
-    public float acceleration = 0.1f;
+    public float rotationInterval = 30.0f; // Rotation interval in degrees
+    public float rotationSpeed = 360.0f; // Speed of rotation in degrees per second
 
     private Transform ball;
-    private Vector3 centerPoint;
+    private float targetAngle = 0.0f;
+    private bool isRotating = false;
 
-    private void Start()
+    void Start()
     {
         // Find the ball in the scene
         ball = GameObject.FindGameObjectWithTag("Player").transform;
-
-        // Calculate the initial center point of rotation
-        centerPoint = transform.position;
     }
 
-    private void Update()
+    void Update()
     {
-        // Get input for rotation
-        float rotationInput = Input.GetAxis("Horizontal");
-
-        // Calculate the new center point based on the ball's position
-        centerPoint = ball.position;
-
-        // Rotate the surface around the new center point
-        transform.RotateAround(centerPoint, Vector3.forward, rotationInput * rotationSpeed * Time.deltaTime);
-
-        // Gradually increase rotation speed
-        if (rotationSpeed < maxRotationSpeed)
+        // Check for input
+        if ((Input.GetKeyDown(KeyCode.LeftArrow) || (Input.GetKeyDown(KeyCode.A))) && !isRotating)
         {
-            rotationSpeed += acceleration * Time.deltaTime;
+            RotateLeft();
         }
+        else if ((Input.GetKeyDown(KeyCode.RightArrow)) || (Input.GetKeyDown(KeyCode.D)) && !isRotating)
+        {
+            RotateRight();
+        }
+
+        // Rotate towards the target angle
+        if (isRotating)
+        {
+            float currentAngle = Mathf.MoveTowardsAngle(transform.eulerAngles.z, targetAngle, rotationSpeed * Time.deltaTime);
+            transform.RotateAround(ball.position, Vector3.forward, currentAngle - transform.eulerAngles.z);
+
+            if (Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.z, targetAngle)) < 0.1f)
+            {
+                transform.RotateAround(ball.position, Vector3.forward, targetAngle - transform.eulerAngles.z);
+                isRotating = false;
+            }
+        }
+    }
+
+    void RotateLeft()
+    {
+        // Decrease the target angle
+        targetAngle -= rotationInterval;
+        isRotating = true;
+    }
+
+    void RotateRight()
+    {
+        // Increase the target angle
+        targetAngle += rotationInterval;
+        isRotating = true;
     }
 }
